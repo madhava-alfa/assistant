@@ -1,0 +1,47 @@
+{
+  "name": "@assistant/server",
+  "version": "1.0.0",
+  "author": {
+    "name": "Madhava Yallanki"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "dist/lib/index.js",
+  "types": "dist/lib/index.d.ts",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 120
+  },
+  "scripts": {
+    "clean": "rm -rf node_modules package-lock.json dist",
+    "lint": "eslint src --fix",
+    "release": "npm run lint && tsc"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "@types/aws-lambda": "^8.10.147",
+    "@types/node": "^22.13.4",
+    "@types/pg": "^8.11.11",
+    "@typescript-eslint/parser": "^8.24.0",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-import-resolver-typescript": "^3.8.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.0"
+  },
+  "files": [
+    "dist/src/**/*"
+  ],
+  "dependencies": {
+    "@google/generative-ai": "^0.21.0",
+    "pg": "^8.13.3",
+    "pino": "^9.6.0"
+  }
+}
