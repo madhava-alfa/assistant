@@ -19,6 +19,7 @@
     "clean": "rm -rf node_modules package-lock.json dist",
     "lint": "eslint src --fix",
     "prepack": "node bin/prepack.mjs",
+    "postpack": "rm -rf ../infra/code/server/package && tar -xf assistant-server-1.0.0.tgz --directory ../infra/code/server",
     "release": "npm run lint && tsc && rm -rf assistant-server-*.tgz && npm pack"
   },
   "devDependencies": {

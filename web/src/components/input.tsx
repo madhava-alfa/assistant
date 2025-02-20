@@ -28,9 +28,11 @@ export const TextInput = (props: InputProps): JSX.Element => {
   return <BaseInput {...props} type="text" />;
 };
 
-type TextAreaInputProps = React.JSX.IntrinsicElements['textarea'];
+type TextAreaInputProps = React.JSX.IntrinsicElements['textarea'] & {
+  error?: string;
+};
 
-export const TextAreaInput = ({ className, onChange, ...rest }: TextAreaInputProps): JSX.Element => {
+export const TextAreaInput = ({ className, error, onChange, ...rest }: TextAreaInputProps): JSX.Element => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const onInputChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -42,11 +44,14 @@ export const TextAreaInput = ({ className, onChange, ...rest }: TextAreaInputPro
   };
 
   return (
-    <textarea
-      ref={textareaRef}
-      onChange={onInputChange}
-      className={twMerge('textarea leading-normal min-h-24', className)}
-      {...rest}
-    />
+    <fieldset className="fieldset">
+      {error && <div className="fieldset-label text-red-500 justify-end">{error}</div>}
+      <textarea
+        ref={textareaRef}
+        onChange={onInputChange}
+        className={twMerge('textarea leading-normal min-h-24', error ? 'textarea-error' : undefined, className)}
+        {...rest}
+      />
+    </fieldset>
   );
 };
