@@ -1,0 +1,60 @@
+{
+  "name": "@assistant/web",
+  "version": "1.0.0",
+  "author": {
+    "name": "Madhava Yallanki"
+  },
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf dist build node_modules package-lock.json",
+    "lint": "eslint src --fix",
+    "release": "tsc && npm run lint && vite build",
+    "preview": "vite preview",
+    "start": "vite"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "printWidth": 120
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.0.7",
+    "@types/node": "^22.13.4",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
+    "@types/react-router-hash-link": "^2.4.9",
+    "@typescript-eslint/eslint-plugin": "^8.24.1",
+    "@typescript-eslint/parser": "^8.24.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "daisyui": "^5.0.0-beta.8",
+    "eslint": "^9.20.1",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "eslint-plugin-react": "^7.37.4",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "prettier": "^3.5.1",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "tailwindcss": "^4.0.7",
+    "type-fest": "^4.35.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.24.1",
+    "vite": "^6.1.0",
+    "vite-tsconfig-paths": "^5.1.4"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.5.1",
+    "immutability-helper": "^3.1.1",
+    "lucide-react": "^0.475.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.3",
+    "react-redux": "^9.2.0",
+    "react-router-dom": "^7.2.0",
+    "redux-persist": "^6.0.0",
+    "tailwind-merge": "^3.0.1",
+    "url": "^0.11.4"
+  }
+}

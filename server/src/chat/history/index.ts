@@ -1,7 +1,8 @@
 import type { Part, Content, GenerativeModel } from '@google/generative-ai';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { DB } from '../../database/index.js';
-import { epochTime } from '../../utils/time.js';
+import { ConversationRow } from '../../database/tables.js';
+import { epochTime } from '../../utils/index.js';
 import { Logger } from '../../utils/logger.js';
 
 const logger = new Logger({ module: import.meta.url });
@@ -10,27 +11,20 @@ type HistoryManagerArgs = {
   userId: string;
 };
 
-type QueueItem = Content & { createdAt: number };
+type QueueItem = { role: string; message: Part; createdAt: number };
 
-type ConversationRow = {
-  message_sequence: string;
-  is_summary: boolean | null;
-  role: string;
-  parts?: Part[];
-};
+type ExistingRow = Pick<ConversationRow, 'message_sequence' | 'role' | 'message' | 'is_summary'>;
 
-type SummaryGroupArgs = {
-  startIdx: number;
-};
+type SummaryGroupArgs = { startIdx: number };
 
 type SummaryGroupResult = {
   nextIdx: number;
-  rows: ConversationRow[];
+  rows: ExistingRow[];
 };
 
 type ArchiveRowsArgs = {
   summary: string;
-  rows: ConversationRow[];
+  rows: ExistingRow[];
 };
 
 const SUMMARIZATION_INSTRUCTIONS = `
@@ -47,7 +41,7 @@ export class HistoryManager {
   private readonly db: DB;
   private readonly userId: string;
   private readonly model: GenerativeModel;
-  private existing: ConversationRow[];
+  private existing: ExistingRow[];
   private queue: QueueItem[];
 
   constructor({ userId }: HistoryManagerArgs) {
@@ -60,8 +54,9 @@ export class HistoryManager {
   }
 
   async getHistory(): Promise<Content[]> {
-    const { rows } = await this.db.query<ConversationRow>(
-      `SELECT message_sequence, role, parts, is_summary FROM conversation_history
+    const { rows } = await this.db.query<ExistingRow>(
+      `SELECT message_sequence, role, message, is_summary
+        FROM conversation_history
         WHERE user_id = $1
         AND is_archived IS NOT true
         ORDER BY message_sequence;`,
@@ -75,9 +70,7 @@ export class HistoryManager {
 
     this.existing = rows;
     this.existing.forEach((row) => {
-      if (row.parts && row.parts.length > 0) {
-        history.push({ role: row.role, parts: row.parts });
-      }
+      history.push({ role: row.role, parts: [row.message] });
     });
 
     return history;
@@ -88,11 +81,11 @@ export class HistoryManager {
   }
 
   async saveQueue(contextTokens: number): Promise<void> {
-    for (const content of this.queue) {
+    for (const { createdAt, role, message } of this.queue) {
       await this.db.query(
-        `INSERT INTO conversation_history (user_id, message_sequence, role, parts, created_at, updated_at) VALUES 
+        `INSERT INTO conversation_history (user_id, message_sequence, role, message, created_at, updated_at) VALUES 
           ($1, $2, $3, $4, $5, $6)`,
-        [this.userId, content.createdAt, content.role, content.parts, content.createdAt, content.createdAt],
+        [this.userId, createdAt, role, message, createdAt, createdAt],
       );
     }
 
@@ -106,20 +99,16 @@ export class HistoryManager {
       return;
     }
 
-    const queueTokens = await this.model.countTokens({
-      contents: this.queue.map(({ role, parts }) => ({ role, parts })),
-    });
+    const queueContents: Content[] = this.queue.map(({ role, message }) => ({ role, parts: [message] }));
+    const queueTokens = await this.model.countTokens({ contents: queueContents });
     let summarizedTokens = 0;
     let startIdx = 0;
 
     while (true) {
       const group = this.getSummaryGroup({ startIdx });
-      if (!group) {
-        break;
-      }
+      if (!group) break;
 
-      const groupTokens = await this.summarizeRows(group.rows);
-      summarizedTokens += groupTokens;
+      summarizedTokens += await this.summarizeRows(group.rows);
       if (summarizedTokens > queueTokens.totalTokens) {
         break;
       }
@@ -138,23 +127,23 @@ export class HistoryManager {
 
     const selectedDay = new Date(parseInt(firstRow.message_sequence)).toLocaleDateString();
     let nextIdx = startIdx;
-    const selectedRows: ConversationRow[] = [];
+    const groupRows: ExistingRow[] = [];
     for (const [idx, row] of batch.entries()) {
       if (row.is_summary) continue;
       if (selectedDay === new Date(parseInt(row.message_sequence)).toLocaleDateString()) {
-        selectedRows.push(row);
+        groupRows.push(row);
       } else {
         nextIdx = idx;
         break;
       }
     }
 
-    logger.info({ selectedDay, rows: selectedRows.length }, 'Grouped messages for a the oldest date');
-    return { nextIdx, rows: selectedRows };
+    logger.info({ selectedDay, rows: groupRows.length }, 'Grouped messages for a the oldest date');
+    return { nextIdx, rows: groupRows };
   }
 
-  private async summarizeRows(rows: ConversationRow[]): Promise<number> {
-    const contents = rows.map((r) => ({ role: r.role, parts: r.parts || [] }));
+  private async summarizeRows(rows: ExistingRow[]): Promise<number> {
+    const contents = rows.map(({ role, message }) => ({ role, parts: [message] }));
     const { totalTokens } = await this.model.countTokens({ contents });
 
     contents.push({ role: 'user', parts: [{ text: 'Summarize the conversation.' }] });
@@ -178,9 +167,9 @@ export class HistoryManager {
 
     const summarySequence = parseInt(rows[rows.length - 1].message_sequence);
     await this.db.query(
-      `INSERT INTO conversation_history (user_id, message_sequence, role, parts, is_summary, created_at, updated_at) VALUES 
+      `INSERT INTO conversation_history (user_id, message_sequence, role, message, is_summary, created_at, updated_at) VALUES 
         ($1, $2, $3, $4, $5, $6, $7)`,
-      [this.userId, summarySequence, 'model', [{ text: summary }], true, epochTime(), epochTime()],
+      [this.userId, summarySequence, 'model', { text: summary }, true, epochTime(), epochTime()],
     );
     logger.info('Summary inserted to database');
   }

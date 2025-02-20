@@ -1,7 +1,7 @@
 import { type FunctionDeclaration, SchemaType } from '@google/generative-ai';
 import { coreMemoryAppend, coreMemoryReplace } from './coreMemory.js';
 import { conversationSearch } from './conversation.js';
-import { type Identity } from '../../utils/types.js';
+import { type Identity } from '../../utils/index.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const functions: Record<string, (identity: Identity, args: any) => Promise<object>> = {

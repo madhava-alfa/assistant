@@ -1,6 +1,5 @@
 import { DB } from '../../database/index.js';
-import { epochTime } from '../../utils/time.js';
-import { type Identity } from '../../utils/types.js';
+import { epochTime, type Identity } from '../../utils/index.js';
 
 type AppendArgs = {
   isPresent: boolean;

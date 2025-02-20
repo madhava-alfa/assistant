@@ -1,7 +1,7 @@
 import pg from 'pg';
 
 type Row = Record<string, unknown>;
-type QueryParams = Array<string | number | boolean | object>;
+type QueryParams = Array<string | number | boolean | undefined | object>;
 
 export class DB {
   private static _singleton: pg.Pool | undefined;
@@ -10,11 +10,14 @@ export class DB {
   constructor() {
     if (!DB._singleton) {
       DB._singleton = new pg.Pool({
-        host: 'localhost',
+        host: process.env['PGHOST'],
         port: 5432,
         database: 'postgres',
-        user: 'postgres',
+        user: process.env['PGUSER'],
         password: process.env['PGPASSWORD'],
+        ssl: {
+          rejectUnauthorized: false,
+        },
       });
     }
 
