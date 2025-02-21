@@ -9,8 +9,8 @@ export function epochTime(): number {
 }
 
 export function getUserId(event: APIGatewayProxyEvent): string {
-  if (event.headers?.['x-api-key']) {
-    return event.headers['x-api-key'];
+  if (event.requestContext?.identity?.apiKeyId) {
+    return event.requestContext.identity.apiKeyId;
   }
 
   throw new Error('Forbidden');

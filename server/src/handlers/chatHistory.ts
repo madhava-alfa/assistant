@@ -21,8 +21,8 @@ export async function chatHistoryHandler(event: APIGatewayEvent): Promise<APIGat
     );
 
     return APIResponse.forData({ history: rows });
-  } catch (e) {
-    logger.info({ e }, 'Error in chatHistoryHandler');
-    return APIResponse.forError(e);
+  } catch (error) {
+    logger.info({ event, error }, 'Error in chatHistoryHandler');
+    return APIResponse.forError(error);
   }
 }

@@ -19,8 +19,8 @@ export async function chatMessageHandler(event: APIGatewayProxyEvent): Promise<A
     const chat = new AssistantChat({ userId });
     const data = await chat.send(payload.message);
     return APIResponse.forData(data);
-  } catch (e) {
-    logger.error({ e }, 'Error in chatMessageHandler');
-    return APIResponse.forError(e);
+  } catch (error) {
+    logger.error({ event, error }, 'Error in chatMessageHandler');
+    return APIResponse.forError(error);
   }
 }
