@@ -34,7 +34,7 @@ export async function coreMemoryAppend({ userId }: Identity, { isPresent, newCon
     const content = await getMemory(userId);
     await putMemory({ userId, memory: `${content}\n${newContent}` });
   }
-  return { status: 'Success' };
+  return {};
 }
 
 export async function coreMemoryReplace(
@@ -44,5 +44,5 @@ export async function coreMemoryReplace(
   const content = await getMemory(userId);
   const memory = content.replace(oldContent, newContent || '');
   await putMemory({ userId, memory });
-  return { status: 'Success' };
+  return {};
 }

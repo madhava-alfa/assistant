@@ -13,8 +13,10 @@ type AssistantChatArgs = {
   userId: string;
 };
 
+type ResponseItem = Pick<ConversationRow, 'role' | 'message' | 'created_at'> & { thinking?: boolean };
+
 type ChatResponse = {
-  messages: Pick<ConversationRow, 'role' | 'message' | 'created_at'>[];
+  messages: ResponseItem[];
 };
 
 export class AssistantChat {
@@ -41,12 +43,8 @@ export class AssistantChat {
       generationConfig: { temperature: 1, maxOutputTokens: 8192 },
       toolConfig: { functionCallingConfig: { mode: FunctionCallingMode.AUTO } },
       tools: [
-        {
-          functionDeclarations: functionDeclarations,
-          // googleSearchRetrieval: {
-          //   dynamicRetrievalConfig: { mode: DynamicRetrievalMode.MODE_DYNAMIC, dynamicThreshold: 0.75 },
-          // },
-        },
+        // { googleSearchRetrieval: {} },
+        { functionDeclarations: functionDeclarations },
       ],
     });
     const chat = model.startChat({ history });
@@ -62,7 +60,7 @@ export class AssistantChat {
     const text = response.text();
     this.contextTokens = response.usageMetadata?.totalTokenCount || 0;
     if (text && (!calls || calls.length === 0)) {
-      this.sendResponse(text);
+      this.queueResponse({ message: { text } });
     }
 
     const steps = await this.buildSteps(calls);
@@ -71,16 +69,24 @@ export class AssistantChat {
     }
   }
 
-  private sendResponse(text: string): void {
-    this.historyManager.addToQueue({ role: 'model', message: { text } });
-    this.response.messages.push({ role: 'model', message: { text }, created_at: epochTime().toString() });
+  private queueResponse({ message, thinking }: Pick<ResponseItem, 'message' | 'thinking'>): void {
+    this.response.messages.push({ role: 'model', message, thinking, created_at: epochTime().toString() });
+    if (!thinking) {
+      this.historyManager.addToQueue({ role: 'model', message });
+    }
   }
 
   private async buildSteps(calls?: FunctionCall[]): Promise<Part[]> {
     const steps: Part[] = [];
     for (const { name, args } of calls || []) {
-      this.historyManager.addToQueue({ role: 'model', message: { functionCall: { name, args } } });
+      if (name === 'record_thoughts') {
+        steps.push({ functionResponse: { name, response: {} } });
+        this.queueResponse({ message: { text: (args as Record<string, string>).thoughts }, thinking: true });
+        continue;
+      }
+
       logger.info({ name, args }, 'Calling function');
+      this.historyManager.addToQueue({ role: 'model', message: { functionCall: { name, args } } });
       const response = await functions[name]({ userId: this.userId }, args);
       steps.push({ functionResponse: { name, response } });
       this.historyManager.addToQueue({ role: 'function', message: { functionResponse: { name, response } } });

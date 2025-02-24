@@ -42,12 +42,11 @@
     "dist/src/**/*"
   ],
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/generative-ai": "^0.22.0",
     "pg": "^8.13.3",
     "pino": "^9.6.0"
   },
   "bundleDependencies": [
-    "@google/generative-ai",
     "pg",
     "pino"
   ]

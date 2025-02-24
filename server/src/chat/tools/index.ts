@@ -46,4 +46,15 @@ export const functionDeclarations: FunctionDeclaration[] = [
       required: ['query'],
     },
   },
+  {
+    name: 'record_thoughts',
+    description: 'Record the thinking process used to provide helpful response to the user',
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        thoughts: { type: SchemaType.STRING },
+      },
+      required: ['thoughts'],
+    },
+  },
 ];

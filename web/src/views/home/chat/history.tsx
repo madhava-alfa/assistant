@@ -17,14 +17,7 @@ export const ChatHistory = ({ history, loading }: ChatHistoryProps): JSX.Element
   return (
     <div>
       {history.map((item, idx) => (
-        <div key={idx} className={twMerge('chat', item.role === 'user' ? 'chat-start' : 'chat-end')}>
-          <div className={twMerge('chat-bubble shadow-md', item.role === 'user' ? 'chat-bubble-success' : undefined)}>
-            <div className="prose">
-              <Markdown>{item.message.text}</Markdown>
-            </div>
-          </div>
-          <Time className="chat-footer mt-1 opacity-75" epochString={item.created_at} />
-        </div>
+        <ChatMessage key={idx} item={item} />
       ))}
       {loading && (
         <div className="chat chat-end">
@@ -35,6 +28,27 @@ export const ChatHistory = ({ history, loading }: ChatHistoryProps): JSX.Element
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+type ChatMessageProps = {
+  item: MessageItem;
+};
+
+const ChatMessage = ({ item }: ChatMessageProps): JSX.Element | null => {
+  if (!item.message.text) {
+    return null;
+  }
+
+  return (
+    <div className={twMerge('chat', item.role === 'user' ? 'chat-start' : 'chat-end')}>
+      <div className={twMerge('chat-bubble shadow-md', item.role === 'user' ? 'chat-bubble-success' : undefined)}>
+        <div className="prose">
+          <Markdown>{item.message.text}</Markdown>
+        </div>
+      </div>
+      <Time className="chat-footer mt-1 opacity-75" epochString={item.created_at} />
     </div>
   );
 };

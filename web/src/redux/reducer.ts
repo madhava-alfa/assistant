@@ -10,7 +10,7 @@ export const rootSlice = createSlice({
   name: 'root',
   initialState: {},
   reducers: {
-    setApiKey: (state: Draft<ReduxState>, action: PayloadAction<string>) => {
+    setApiKey: (state: Draft<ReduxState>, action: PayloadAction<string | undefined>) => {
       state.apiKey = action.payload;
     },
   },
