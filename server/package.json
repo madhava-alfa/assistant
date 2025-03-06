@@ -17,13 +17,13 @@
   },
   "scripts": {
     "clean": "rm -rf node_modules package-lock.json dist",
-    "prepack": "node bin/prepack.mjs",
+    "prepack": "node node_modules/@madhava-yallanki/ts-tools/dist/lib/scripts/prepack.js",
     "postpack": "rm -rf ../infra/code/server/package && tar -xf assistant-server-1.0.0.tgz --directory ../infra/code/server",
     "build": "npm dedupe && eslint src --fix && tsc",
     "release": "npm run build && rm -rf assistant-server-*.tgz && npm pack"
   },
   "devDependencies": {
-    "@madhava-yallanki/ts-tools": "^1.0.3",
+    "@madhava-yallanki/ts-tools": "^1.0.5",
     "@types/aws-lambda": "^8.10.147",
     "@types/node": "^22.13.4",
     "ts-node": "^10.9.2",
