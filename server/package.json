@@ -17,37 +17,32 @@
   },
   "scripts": {
     "clean": "rm -rf node_modules package-lock.json dist",
-    "lint": "eslint src --fix",
     "prepack": "node bin/prepack.mjs",
     "postpack": "rm -rf ../infra/code/server/package && tar -xf assistant-server-1.0.0.tgz --directory ../infra/code/server",
-    "release": "npm run lint && tsc && rm -rf assistant-server-*.tgz && npm pack"
+    "build": "npm dedupe && eslint src --fix && tsc",
+    "release": "npm run build && rm -rf assistant-server-*.tgz && npm pack"
   },
   "devDependencies": {
-    "@eslint/js": "^9.20.0",
+    "@madhava-yallanki/ts-tools": "^1.0.3",
     "@types/aws-lambda": "^8.10.147",
     "@types/node": "^22.13.4",
-    "@types/pg": "^8.11.11",
-    "@typescript-eslint/parser": "^8.24.0",
-    "eslint": "^9.20.1",
-    "eslint-config-prettier": "^10.0.1",
-    "eslint-import-resolver-typescript": "^3.8.0",
-    "eslint-plugin-import": "^2.31.0",
-    "eslint-plugin-prettier": "^5.2.3",
-    "prettier": "^3.5.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.7.3",
-    "typescript-eslint": "^8.24.0"
+    "type-fest": "^4.37.0",
+    "typescript": "^5.7.3"
   },
   "files": [
     "dist/src/**/*"
   ],
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.758.0",
     "@google/generative-ai": "^0.22.0",
-    "pg": "^8.13.3",
+    "@madhava-yallanki/dynamo-mapper": "^1.0.2",
     "pino": "^9.6.0"
   },
   "bundleDependencies": [
-    "pg",
+    "@aws-sdk/client-sqs",
+    "@google/generative-ai",
+    "@madhava-yallanki/dynamo-mapper",
     "pino"
   ]
 }

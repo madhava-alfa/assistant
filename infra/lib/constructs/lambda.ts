@@ -8,7 +8,7 @@ export type LambdaFunctionArgs = Pick<
   Pick<aws_lambda.VersionOptions, 'provisionedConcurrentExecutions'> & {
     functionName: string;
     rolePolicyStatements?: aws_iam.PolicyStatement[];
-    encryptionKey?: aws_kms.IKey;
+    encryptionKey: aws_kms.IKey;
   };
 
 export class LambdaFunction extends Construct {
@@ -20,22 +20,22 @@ export class LambdaFunction extends Construct {
   constructor(scope: Construct, args: LambdaFunctionArgs) {
     super(scope, args.functionName);
     this.args = args;
-    this.createRole();
-    this.createFunction();
-    this.createAlias();
+    this.role = this.createRole();
+    this.func = this.createFunction();
+    this.alias = this.createAlias();
   }
 
-  private createRole(): void {
+  private createRole(): aws_iam.Role {
     const defaultPolicy: aws_iam.PolicyStatement[] = [
       new aws_iam.PolicyStatement({ actions: ['cloudwatch:*', 'logs:*'], resources: ['*'] }),
-      // new aws_iam.PolicyStatement({
-      //   actions: ['kms:*'],
-      //   resources: [this.args.encryptionKey.keyArn],
-      //   conditions: { StringLike: { 'kms:ViaService': 'dynamodb.*.amazonaws.com' } },
-      // }),
+      new aws_iam.PolicyStatement({
+        actions: ['kms:*'],
+        resources: [this.args.encryptionKey.keyArn],
+        conditions: { StringLike: { 'kms:ViaService': 'dynamodb.*.amazonaws.com' } },
+      }),
     ];
 
-    this.role = new aws_iam.Role(this, 'Role', {
+    return new aws_iam.Role(this, 'Role', {
       roleName: `Lambda-${this.args.functionName}-Role`,
       assumedBy: new aws_iam.ServicePrincipal('lambda'),
       inlinePolicies: {
@@ -46,8 +46,8 @@ export class LambdaFunction extends Construct {
     });
   }
 
-  private createFunction(): void {
-    this.func = new aws_lambda.Function(this, 'Function', {
+  private createFunction(): aws_lambda.Function {
+    return new aws_lambda.Function(this, 'Function', {
       functionName: this.args.functionName,
       description: `${this.args.description || ''}-${new Date().toISOString()}`,
       role: this.role,
@@ -69,8 +69,8 @@ export class LambdaFunction extends Construct {
     });
   }
 
-  private createAlias(): void {
-    this.alias = new aws_lambda.Alias(this, 'Alias', {
+  private createAlias(): aws_lambda.Alias {
+    return new aws_lambda.Alias(this, 'Alias', {
       aliasName: 'live',
       version: this.func.currentVersion,
     });

@@ -5,7 +5,7 @@ import { HistoryManager } from './history/index.js';
 import { functions, functionDeclarations } from './tools/index.js';
 import { Logger } from '../utils/logger.js';
 import { epochTime } from '../utils/index.js';
-import { ConversationRow } from '../database/tables.js';
+import { Message } from '../database/entities.js';
 
 const logger = new Logger({ module: import.meta.url });
 
@@ -13,7 +13,7 @@ type AssistantChatArgs = {
   userId: string;
 };
 
-type ResponseItem = Pick<ConversationRow, 'role' | 'message' | 'created_at'> & { thinking?: boolean };
+type ResponseItem = Pick<Message, 'role' | 'data' | 'createdOn'> & { thinking?: boolean };
 
 type ChatResponse = {
   messages: ResponseItem[];
@@ -48,19 +48,20 @@ export class AssistantChat {
       ],
     });
     const chat = model.startChat({ history });
-    this.historyManager.addToQueue({ role: 'user', message: { text: message } });
+    this.historyManager.addToBuffer({ role: 'user', data: { text: message } });
     await this.runStep(chat, [{ text: message }]);
-    await this.historyManager.saveQueue(this.contextTokens);
+    await this.historyManager.saveBuffer(this.contextTokens);
     return this.response;
   }
 
   private async runStep(chat: ChatSession, parts: Part[]): Promise<void> {
+    logger.info({ parts }, 'Running step');
     const { response } = await chat.sendMessage(parts);
     const calls = response.functionCalls();
     const text = response.text();
     this.contextTokens = response.usageMetadata?.totalTokenCount || 0;
     if (text && (!calls || calls.length === 0)) {
-      this.queueResponse({ message: { text } });
+      this.addToResponse({ data: { text } });
     }
 
     const steps = await this.buildSteps(calls);
@@ -69,10 +70,10 @@ export class AssistantChat {
     }
   }
 
-  private queueResponse({ message, thinking }: Pick<ResponseItem, 'message' | 'thinking'>): void {
-    this.response.messages.push({ role: 'model', message, thinking, created_at: epochTime().toString() });
+  private addToResponse({ data, thinking }: Pick<ResponseItem, 'data' | 'thinking'>): void {
+    this.response.messages.push({ role: 'model', data, thinking, createdOn: epochTime() });
     if (!thinking) {
-      this.historyManager.addToQueue({ role: 'model', message });
+      this.historyManager.addToBuffer({ role: 'model', data });
     }
   }
 
@@ -81,15 +82,15 @@ export class AssistantChat {
     for (const { name, args } of calls || []) {
       if (name === 'record_thoughts') {
         steps.push({ functionResponse: { name, response: {} } });
-        this.queueResponse({ message: { text: (args as Record<string, string>).thoughts }, thinking: true });
+        this.addToResponse({ data: { text: (args as Record<string, string>).thoughts }, thinking: true });
         continue;
       }
 
       logger.info({ name, args }, 'Calling function');
-      this.historyManager.addToQueue({ role: 'model', message: { functionCall: { name, args } } });
+      this.historyManager.addToBuffer({ role: 'model', data: { functionCall: { name, args } } });
       const response = await functions[name]({ userId: this.userId }, args);
       steps.push({ functionResponse: { name, response } });
-      this.historyManager.addToQueue({ role: 'function', message: { functionResponse: { name, response } } });
+      this.historyManager.addToBuffer({ role: 'function', data: { functionResponse: { name, response } } });
     }
 
     return steps;

@@ -120,7 +120,7 @@ export class Website extends Construct {
   private createDeployment() {
     const currentDir = dirname(fileURLToPath(import.meta.url));
     new aws_s3_deployment.BucketDeployment(this, 'BucketDeployment', {
-      sources: [aws_s3_deployment.Source.asset(join(currentDir, `../../../assistant/web/build`))],
+      sources: [aws_s3_deployment.Source.asset(join(currentDir, `../../../../assistant/web/build`))],
       destinationBucket: this.bucket,
       distribution: this.distribution,
       distributionPaths: ['/*'],

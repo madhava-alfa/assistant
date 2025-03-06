@@ -19,8 +19,9 @@ export const functionDeclarations: FunctionDeclaration[] = [
       properties: {
         newContent: { type: SchemaType.STRING, description: 'New content to append to the memory.' },
         isPresent: { type: SchemaType.BOOLEAN, description: `Is newContent already present in <human> block?` },
+        reason: { type: SchemaType.STRING, description: `Your reason behind invoking this function` },
       },
-      required: ['newContent', 'isPresent'],
+      required: ['newContent', 'isPresent', 'reason'],
     },
   },
   {
@@ -31,8 +32,9 @@ export const functionDeclarations: FunctionDeclaration[] = [
       properties: {
         oldContent: { type: SchemaType.STRING, description: 'String to replace. Must be an exact match.' },
         newContent: { type: SchemaType.STRING, description: 'Content to write to the memory.' },
+        reason: { type: SchemaType.STRING, description: `Your reason behind invoking this function` },
       },
-      required: ['oldContent'],
+      required: ['oldContent', 'reason'],
     },
   },
   {
